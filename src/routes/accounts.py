@@ -19,9 +19,6 @@ from database import (
 )
 from exceptions import BaseSecurityError
 from notifications import EmailSenderInterface
-
-# Base URL used to build links included in outgoing account emails.
-BASE_URL = "http://127.0.0.1"
 from schemas import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
@@ -35,6 +32,9 @@ from schemas import (
     TokenRefreshResponseSchema
 )
 from security.interfaces import JWTAuthManagerInterface
+
+# Base URL used to build links included in outgoing account emails.
+BASE_URL = "http://127.0.0.1"
 
 router = APIRouter()
 
@@ -477,6 +477,7 @@ async def refresh_access_token(
         db: AsyncSession = Depends(get_db),
         jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
 ) -> TokenRefreshResponseSchema:
+
     try:
         decoded_token = jwt_manager.decode_refresh_token(token_data.refresh_token)
         user_id = decoded_token.get("user_id")
