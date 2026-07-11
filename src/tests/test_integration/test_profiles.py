@@ -10,6 +10,19 @@ from database import UserModel, UserProfileModel
 from exceptions import S3FileUploadError
 
 
+def _valid_avatar_bytes() -> BytesIO:
+    """Generate a small valid in-memory JPEG image for avatar uploads in tests
+    that intentionally trigger a validation error on a *different* field.
+    Using real JPEG bytes here ensures the avatar's own validation passes,
+    so only the field under test produces an error.
+    """
+    img = Image.new("RGB", (100, 100), color="blue")
+    img_bytes = BytesIO()
+    img.save(img_bytes, format="JPEG")
+    img_bytes.seek(0)
+    return img_bytes
+
+
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_create_user_profile_with_fake_s3(
@@ -472,7 +485,7 @@ async def test_profile_creation_invalid_name(
         "gender": (None, "man"),
         "date_of_birth": (None, "1990-01-01"),
         "info": (None, "This is a test profile."),
-        "avatar": ("avatar.jpg", BytesIO(b"fake_image"), "image/jpeg"),
+        "avatar": ("avatar.jpg", _valid_avatar_bytes(), "image/jpeg"),
     }
 
     response = await client.post(profile_url, headers=headers, files=files)
@@ -581,7 +594,7 @@ async def test_profile_creation_invalid_gender(db_session, client, jwt_manager):
         "gender": (None, "other"),
         "date_of_birth": (None, "1990-01-01"),
         "info": (None, "This is a test profile."),
-        "avatar": ("avatar.jpg", BytesIO(b"fake_image"), "image/jpeg"),
+        "avatar": ("avatar.jpg", _valid_avatar_bytes(), "image/jpeg"),
     }
 
     response = await client.post(profile_url, headers=headers, files=files)
@@ -619,7 +632,7 @@ async def test_profile_creation_invalid_birth_date(db_session, client, jwt_manag
         "gender": (None, "man"),
         "date_of_birth": (None, birth_date),
         "info": (None, "This is a test profile."),
-        "avatar": ("avatar.jpg", BytesIO(b"fake_image"), "image/jpeg"),
+        "avatar": ("avatar.jpg", _valid_avatar_bytes(), "image/jpeg"),
     }
 
     response = await client.post(profile_url, headers=headers, files=files)
@@ -653,7 +666,7 @@ async def test_profile_creation_empty_info(db_session, client, jwt_manager, info
         "gender": (None, "man"),
         "date_of_birth": (None, "1990-01-01"),
         "info": (None, info_value),
-        "avatar": ("avatar.jpg", BytesIO(b"fake_image"), "image/jpeg"),
+        "avatar": ("avatar.jpg", _valid_avatar_bytes(), "image/jpeg"),
     }
 
     response = await client.post(profile_url, headers=headers, files=files)
